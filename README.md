@@ -1,22 +1,28 @@
-# Smart Support Ticketing System (Backend)
+# Smart Support Ticketing System - Backend (Laravel)
 
-This is the backend implementation for the Smart Support Ticketing System using Laravel 10.
-It provides REST API endpoints for User Registration, Authentication (via Laravel Passport), Ticket Management (CRUD), and AI suggested responses.
+This is the backend API for the Smart Support Ticketing System, built with **Laravel 10**. It handles user authentication, ticket lifecycle management, and integrates with **Google Gemini AI** to provide smart suggestions for support resolutions.
 
-## Setup Instructions
+## 🚀 Getting Started
 
-1. **Install Dependencies**
+### Prerequisites
+- PHP >= 8.2
+- Composer
+- MySQL/MariaDB
+- A Google Gemini API Key (from [Google AI Studio](https://aistudio.google.com/))
+
+### Installation Steps
+
+1. **Clone and Install Dependencies**
    ```bash
    composer install
    ```
 
-2. **Environment Setup**
-   Copy the example `.env` file and set your database connection properly to MySQL.
+2. **Environment Configuration**
    ```bash
    cp .env.example .env
    php artisan key:generate
    ```
-   Add your database credentials in `.env`, e.g.,
+   Open your `.env` file and configure your database and Gemini key:
    ```env
    DB_CONNECTION=mysql
    DB_HOST=127.0.0.1
@@ -24,35 +30,36 @@ It provides REST API endpoints for User Registration, Authentication (via Larave
    DB_DATABASE=tzm_be
    DB_USERNAME=root
    DB_PASSWORD=
-   ```
-   Provide your OpenAI API Key for suggestions in `.env`:
-   ```env
-   OPENAI_API_KEY=your_openai_api_key_here
+
+   GEMINI_API_KEY=your_gemini_api_key_here
    ```
 
-3. **Database and Passport Setup**
-   Run the database migrations to create the required tables:
+3. **Database Migration & Auth Setup**
+   The project uses **Laravel Passport** for secure API authentication.
    ```bash
    php artisan migrate
-   ```
-   Install and generate encryption keys for Laravel Passport (to generate Personal Access tokens):
-   ```bash
    php artisan passport:install
    ```
-   *(Note: This creates the encryption keys and Personal Access Client for Token generation.)*
+   *Note: `passport:install` will generate the encryption keys and personal access clients required for token generation.*
 
-4. **Run the PHP Server**
-   Start the Laravel local development server:
+4. **Start the Server**
+   To ensure compatibility with the pre-configured mobile app, run the server on port **8001**:
    ```bash
-   php artisan serve
+   php artisan serve --port=8001
    ```
-   The backend API will be available at: `http://localhost:8000/api`
+   The API will be accessible at: `http://127.0.0.1:8001/api`
 
-## API Endpoints Overview
+## 🛠️ Key Features
+- **User Authentication**: Secure Register/Login flow using OAuth2 Personal Access Tokens.
+- **Ticket Management**: Full CRUD for support tickets specialized for the logged-in user.
+- **AI Integration**: Integration with `gemini-1.5-flash-lite` to analyze ticket descriptions and suggest resolutions.
+- **RESTful Design**: Standardized JSON responses with appropriate HTTP status codes.
 
-- `POST /api/register` : Register a new user
-- `POST /api/login` : Login as a user and get a Bearer API token
-- `GET /api/tickets` : View support tickets of the authenticated user
-- `POST /api/tickets` : Submit a new ticket (`title`, `description`)
-- `GET /api/tickets/{ticket}` : View details of a specific ticket
-- `POST /api/tickets/{ticket}/suggest` : Get AI response based on ticket description
+## 📡 API Endpoints
+- `POST /api/register` - Create a new account.
+- `POST /api/login` - Authenticate and receive a Bearer token.
+- `GET /api/tickets` - List user's tickets.
+- `POST /api/tickets` - Create a new ticket.
+- `GET /api/tickets/{id}` - View specific ticket details.
+- `PATCH /api/tickets/{id}/close` - Mark a ticket as resolved.
+- `POST /api/tickets/{id}/suggest` - Generate AI resolution suggestion.
