@@ -45,35 +45,43 @@ class TicketController extends Controller
             return response()->json(['message' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
         }
 
-        $apiKey = env('OPENAI_API_KEY', 'dummy_key');
+        $apiKey = env('GEMINI_API_KEY');
+
+        if (!$apiKey) {
+            return response()->json([
+                'suggestion' => 'Gemini API key is not configured.',
+                'is_mock' => true
+            ], Response::HTTP_OK);
+        }
 
         try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
-            ])->post('https://api.openai.com/v1/chat/completions', [
-                'model' => 'gpt-3.5-turbo',
-                'messages' => [
-                    ['role' => 'system', 'content' => 'You are a helpful customer support agent. Provide a short, direct suggested solution for the following customer ticket description.'],
-                    ['role' => 'user', 'content' => $ticket->description],
+            $response = Http::post("https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key={$apiKey}", [
+                'contents' => [
+                    [
+                        'parts' => [
+                            ['text' => "You are a helpful customer support agent. Provide a short, direct suggested solution for the following customer ticket description:\n\n" . $ticket->description]
+                        ]
+                    ]
                 ],
             ]);
 
             if ($response->successful()) {
-                $suggestion = $response->json()['choices'][0]['message']['content'];
-                return response()->json(['suggestion' => $suggestion, 'is_mock' => false], Response::HTTP_OK);
+                $data = $response->json();
+                $suggestion = $data['candidates'][0]['content']['parts'][0]['text'] ?? 'No suggestion generated.';
+                return response()->json(['suggestion' => trim($suggestion), 'is_mock' => false], Response::HTTP_OK);
             }
 
             $errorDetail = $response->json();
-            $errorMessage = $errorDetail['error']['message'] ?? 'Unknown OpenAI error';
+            $errorMessage = $errorDetail['error']['message'] ?? 'Unknown Gemini error';
 
             return response()->json([
-                'suggestion' => 'This is a mock AI response since the API call failed. The suggested solution is to restart your system and check the logs.',
-                'error_message' => "OpenAI Error: " . $errorMessage,
+                'suggestion' => 'This is a mock AI response since the API call failed. Direct solution: Try clearing cache and cookies.',
+                'error_message' => "Gemini Error: " . $errorMessage,
                 'is_mock' => true
             ], Response::HTTP_OK);
         } catch (\Exception $e) {
             return response()->json([
-                'suggestion' => 'This is a mock AI response due to an exception while calling the AI API. Try checking your network connection.',
+                'suggestion' => 'This is a mock AI response due to an exception while calling the AI API.',
                 'error_message' => "Exception: " . $e->getMessage(),
                 'is_mock' => true
             ], Response::HTTP_OK);
